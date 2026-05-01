@@ -505,8 +505,7 @@ def ensure_model_file():
         downloaded_path = gdown.download(
             url=download_url,
             output=str(MODEL_PATH),
-            quiet=False,
-            fuzzy=True,
+            
         )
 
     if not downloaded_path or not MODEL_PATH.exists():
