@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 # Import custom classes from our training script
@@ -522,6 +523,22 @@ def ensure_model_file():
     return MODEL_PATH
 
 
+def scroll_to_prediction_result():
+    components.html(
+        """
+        <script>
+        window.parent.setTimeout(() => {
+            const target = window.parent.document.getElementById("prediction-result-anchor");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        }, 100);
+        </script>
+        """,
+        height=0,
+    )
+
+
 @st.cache_resource
 def load_model():
     return joblib.load(str(ensure_model_file()))
@@ -896,6 +913,8 @@ if predict_clicked:
 
             # ── RESULT CARD ──
             st.divider()
+            st.markdown('<div id="prediction-result-anchor"></div>', unsafe_allow_html=True)
+            scroll_to_prediction_result()
             st.markdown(f"""
             <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
                         text-transform:uppercase;letter-spacing:2px;
