@@ -506,7 +506,7 @@ def download_model():
             url=download_url,
             output=str(MODEL_PATH),
             quiet=False,
-            fuzzy=True,
+            
         )
 
     if not downloaded_path or not MODEL_PATH.exists():
