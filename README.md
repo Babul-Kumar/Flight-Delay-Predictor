@@ -131,6 +131,12 @@ If `output/models/model.joblib` is not already present, set one of these before 
 * `MODEL_GDRIVE_URL`
 * `MODEL_GDRIVE_FILE_ID`
 
+For local development, you can place the value in `.env`:
+
+```env
+MODEL_GDRIVE_FILE_ID=1T09Rwt0KvLczEs1g7JucdLAXlkmARY-x
+```
+
 The app will automatically download the model into `output/models/model.joblib` on first run.
 
 ## 3️⃣ Launch the Application
@@ -194,6 +200,12 @@ streamlit run app.py --server.port $PORT
 
 * Add `MODEL_GDRIVE_URL` or `MODEL_GDRIVE_FILE_ID` as an environment variable
 * Deploy as a web service
+
+### Keep Render Warm
+
+* Render free services can cold start after inactivity.
+* To reduce first-request latency, ping the deployed app every few minutes with a cron or uptime monitor.
+* This is an operational tip only and does not change app behavior.
 
 ---
 

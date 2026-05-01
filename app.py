@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from dotenv import load_dotenv
 
 # Import custom classes from our training script
 from flight_delay_assignment import (
@@ -19,6 +20,8 @@ from flight_delay_assignment import (
 )
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+
 MODEL_PATH = BASE_DIR / "output" / "models" / "model.joblib"
 AIRLINES_PATH = BASE_DIR / "airlines.csv"
 AIRPORTS_PATH = BASE_DIR / "airports.csv"
@@ -487,10 +490,7 @@ def resolve_model_download_url():
     return None
 
 
-def ensure_model_file():
-    if MODEL_PATH.exists():
-        return MODEL_PATH
-
+def download_model():
     download_url = resolve_model_download_url()
     if not download_url:
         raise FileNotFoundError(
@@ -505,11 +505,19 @@ def ensure_model_file():
         downloaded_path = gdown.download(
             url=download_url,
             output=str(MODEL_PATH),
-            
+            quiet=False,
+            fuzzy=True,
         )
 
     if not downloaded_path or not MODEL_PATH.exists():
         raise FileNotFoundError(f"Model download failed for {MODEL_PATH}.")
+
+    return MODEL_PATH
+
+
+def ensure_model_file():
+    if not MODEL_PATH.exists():
+        download_model()
 
     return MODEL_PATH
 

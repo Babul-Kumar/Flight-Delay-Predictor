@@ -2,8 +2,6 @@ import os
 import pandas as pd
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_predict, cross_validate
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -279,6 +277,9 @@ class WeightedAdaBoost(BaseEstimator, ClassifierMixin):
         return self.model.feature_importances_
 
 def main():
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     logger.info("STEP 1 & 2: DATA LOADING AND SAFE MERGING")
     try:
         flights = pd.read_csv('flights.csv', usecols=[
