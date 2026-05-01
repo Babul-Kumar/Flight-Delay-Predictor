@@ -1,1 +1,2 @@
-*.csv filter=lfs diff=lfs merge=lfs -text
+# Small lookup CSVs are versioned directly.
+# Large datasets and generated artifacts are ignored via .gitignore.
