@@ -1,9 +1,13 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import joblib
-import plotly.graph_objects as go
+import os
+from pathlib import Path
 import time
+
+import gdown
+import joblib
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 # Import custom classes from our training script
 from flight_delay_assignment import (
@@ -13,6 +17,13 @@ from flight_delay_assignment import (
     WeightedAdaBoost,
     haversine
 )
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "output" / "models" / "model.joblib"
+AIRLINES_PATH = BASE_DIR / "airlines.csv"
+AIRPORTS_PATH = BASE_DIR / "airports.csv"
+MODEL_GDRIVE_URL_ENV = "MODEL_GDRIVE_URL"
+MODEL_GDRIVE_FILE_ID_ENV = "MODEL_GDRIVE_FILE_ID"
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -451,14 +462,67 @@ st.markdown(f"""
 # ─────────────────────────────────────────────
 # LOAD MODEL & DATA
 # ─────────────────────────────────────────────
+def get_runtime_value(name):
+    value = os.getenv(name)
+    if value:
+        return value
+
+    try:
+        value = st.secrets[name]
+    except Exception:
+        value = None
+
+    return str(value) if value else None
+
+
+def resolve_model_download_url():
+    model_url = get_runtime_value(MODEL_GDRIVE_URL_ENV)
+    if model_url:
+        return model_url
+
+    model_file_id = get_runtime_value(MODEL_GDRIVE_FILE_ID_ENV)
+    if model_file_id:
+        return f"https://drive.google.com/uc?id={model_file_id}"
+
+    return None
+
+
+def ensure_model_file():
+    if MODEL_PATH.exists():
+        return MODEL_PATH
+
+    download_url = resolve_model_download_url()
+    if not download_url:
+        raise FileNotFoundError(
+            f"Model file not found at {MODEL_PATH}. "
+            f"Set {MODEL_GDRIVE_URL_ENV} or {MODEL_GDRIVE_FILE_ID_ENV} "
+            "to enable automatic download."
+        )
+
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    with st.spinner("Downloading model artifact from Google Drive..."):
+        downloaded_path = gdown.download(
+            url=download_url,
+            output=str(MODEL_PATH),
+            quiet=False,
+            fuzzy=True,
+        )
+
+    if not downloaded_path or not MODEL_PATH.exists():
+        raise FileNotFoundError(f"Model download failed for {MODEL_PATH}.")
+
+    return MODEL_PATH
+
+
 @st.cache_resource
 def load_model():
-    return joblib.load('output/models/model.joblib')
+    return joblib.load(str(ensure_model_file()))
 
 @st.cache_data
 def load_aux_data():
-    airlines = pd.read_csv('airlines.csv')
-    airports = pd.read_csv('airports.csv')
+    airlines = pd.read_csv(AIRLINES_PATH)
+    airports = pd.read_csv(AIRPORTS_PATH)
     return airlines, airports
 
 try:

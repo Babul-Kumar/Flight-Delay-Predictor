@@ -104,16 +104,15 @@ A modern Streamlit-based UI allows users to:
 ├── app.py                       # Streamlit web application
 ├── airlines.csv                 # Airline mapping dataset
 ├── airports.csv                 # Airport metadata (location, city, state)
-├── flights.csv                  # Main dataset
-├── output/
-│   ├── models/                  # Saved model pipeline
-│   ├── plots/                   # Visualizations
-│   ├── logs/                    # Training logs
-│   ├── metrics/                 # Model evaluation metrics
-│   └── reports/                 # Cluster analysis
 ├── requirements.txt             # Dependencies
 └── README.md
 ```
+
+Generated locally and ignored by Git:
+
+* `flights.csv` - training dataset
+* `output/models/model.joblib` - trained model artifact
+* `output/` - logs, plots, metrics, and reports
 
 ---
 
@@ -125,13 +124,22 @@ A modern Streamlit-based UI allows users to:
 pip install -r requirements.txt
 ```
 
-## 2️⃣ Launch the Application
+## 2️⃣ Configure Model Download
+
+If `output/models/model.joblib` is not already present, set one of these before starting the app:
+
+* `MODEL_GDRIVE_URL`
+* `MODEL_GDRIVE_FILE_ID`
+
+The app will automatically download the model into `output/models/model.joblib` on first run.
+
+## 3️⃣ Launch the Application
 
 ```bash
 streamlit run app.py
 ```
 
-## 3️⃣ Access the App
+## 4️⃣ Access the App
 
 Open your browser at:
 
@@ -164,6 +172,7 @@ http://localhost:8501
 * Visit: https://share.streamlit.io
 * Create a new app
 * Select repository and `app.py`
+* Add `MODEL_GDRIVE_URL` or `MODEL_GDRIVE_FILE_ID` in app secrets if the model is not bundled locally
 * Deploy instantly (free hosting)
 
 ---
@@ -183,19 +192,24 @@ pip install -r requirements.txt
 streamlit run app.py --server.port $PORT
 ```
 
+* Add `MODEL_GDRIVE_URL` or `MODEL_GDRIVE_FILE_ID` as an environment variable
 * Deploy as a web service
 
 ---
 
 # ⚠️ Important Notes
 
-Ensure the following files are included before deployment:
+Keep the following files in the repository:
 
 * `airlines.csv`
 * `airports.csv`
-* `output/models/model.joblib`
 
-These are required for:
+The trained model should stay out of Git. At runtime, the app will:
+
+* load `output/models/model.joblib` if it already exists locally
+* otherwise download it from Google Drive using `gdown`
+
+These repo files are required for:
 
 * Feature engineering
 * Model inference
