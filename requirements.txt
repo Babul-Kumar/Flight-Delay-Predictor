@@ -1,9 +1,9 @@
 gdown
-joblib
 matplotlib
-numpy
-pandas
 plotly
-scikit-learn
 seaborn
 streamlit
+scikit-learn==1.3.2
+joblib==1.3.2
+numpy==1.24.4
+pandas==1.5.3
