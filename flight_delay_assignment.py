@@ -277,6 +277,8 @@ class WeightedAdaBoost(BaseEstimator, ClassifierMixin):
         return self.model.feature_importances_
 
 def main():
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import seaborn as sns
 
@@ -330,9 +332,24 @@ def main():
     )
     X_test_original = X_test.copy() # Saving to use in error analysis later
     
+    # 1. CLASS DISTRIBUTION
+    plt.figure(figsize=(6, 4))
+    sns.countplot(x=y_train)
+    plt.title("Class Distribution")
+    plt.savefig('output/plots/class_distribution.png')
+    plt.close()
+    
     logger.info("STEP 3, 4, 6: PREPROCESSING PIPELINE (IMPUTE, ENG, OOF TE)")
     preprocessor = FullPreprocessor()
     X_train_preprocessed = preprocessor.fit_transform(X_train, y_train)
+    
+    # 5. FEATURE CORRELATION HEATMAP
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(X_train_preprocessed.corr(), cmap='coolwarm')
+    plt.title("Feature Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig('output/plots/correlation_heatmap.png')
+    plt.close()
     
     logger.info("STEP 7: FORWARD FEATURE SELECTION")
     lr_evaluator = LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')
@@ -457,6 +474,15 @@ def main():
     f1_scores = 2 * (precisions[:-1] * recalls[:-1]) / (precisions[:-1] + recalls[:-1] + 1e-10)
     optim_scores = (0.7 * f1_scores) + (0.5 * recalls[:-1])
     
+    # 3. THRESHOLD VS F1 CURVE
+    plt.figure(figsize=(8, 6))
+    plt.plot(thresholds, f1_scores)
+    plt.title("Threshold vs F1 Score")
+    plt.xlabel("Threshold")
+    plt.ylabel("F1 Score")
+    plt.savefig('output/plots/threshold_vs_f1.png')
+    plt.close()
+    
     # Restrict to threshold bounds [0.1, 0.9]
     valid_idx = np.where((thresholds >= 0.1) & (thresholds <= 0.9))[0]
     if len(valid_idx) > 0:
@@ -512,7 +538,19 @@ def main():
     plt.savefig('output/plots/confusion_matrix.png')
     plt.close()
     
-    if best_model_name == 'AdaBoost':
+    if best_model_name == 'Logistic Regression':
+        try:
+            coef = best_model_base.named_steps['model'].coef_[0]
+            idx = np.argsort(np.abs(coef))[::-1][:20]
+            plt.figure(figsize=(10,8))
+            sns.barplot(x=coef[idx], y=np.array(selected_features)[idx], palette='viridis')
+            plt.title('Top 20 Feature Importances (Logistic Regression)')
+            plt.tight_layout()
+            plt.savefig('output/plots/feature_importance.png')
+            plt.close()
+        except AttributeError:
+            logger.warning("Could not extract feature importances from Logistic Regression.")
+    elif best_model_name == 'AdaBoost':
         try:
             importances = best_model_base.named_steps['model'].feature_importances_
             idx = np.argsort(importances)[::-1][:20]
@@ -566,6 +604,18 @@ def main():
     error_analysis_df = pd.concat([fp_samples, fn_samples])
     error_analysis_df.to_csv('output/reports/error_analysis.csv', index=False)
     logger.info(f"Saved {len(fp_samples)} FP and {len(fn_samples)} FN samples to error_analysis.csv")
+    
+    # 4. ERROR ANALYSIS VISUALIZATION
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    sns.histplot(fp_samples['DISTANCE'], kde=True, color='red')
+    plt.title('False Positives (DISTANCE)')
+    plt.subplot(1, 2, 2)
+    sns.histplot(fn_samples['DISTANCE'], kde=True, color='blue')
+    plt.title('False Negatives (DISTANCE)')
+    plt.tight_layout()
+    plt.savefig('output/plots/error_analysis_distance.png')
+    plt.close()
     
     logger.info("STEP 14: SAVE PIPELINE")
     final_pipeline_obj = {

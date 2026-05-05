@@ -1,7 +1,7 @@
 flights.csv
 __pycache__/
 *.pyc
-*.joblib
+
 output/
 logs/
 .env
